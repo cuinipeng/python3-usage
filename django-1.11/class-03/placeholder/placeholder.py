@@ -22,11 +22,13 @@ from io import BytesIO
 from django.core.wsgi import get_wsgi_application
 # 使用 Django 的缓存工具
 from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.conf.urls import url
 from django.conf import settings
 from django import forms
 from django.views.decorators.http import etag
+from django.shortcuts import render
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,19 @@ settings.configure(
         'django.middleware.csrf.CsrfViewMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ),
+    TEMPLATES=(
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': (os.path.join(BASE_DIR, 'templates'),),
+        },
+    ),
+    INSTALLED_APPS=(
+        'django.contrib.staticfiles',
+    ),
+    STATICFILES_DIRS=(
+        os.path.join(BASE_DIR, 'static'),
+    ),
+    STATIC_URL='/static/',
 )
 
 
@@ -116,9 +131,13 @@ def placeholder(request, width, height):
         return HttpResponseBadRequest('Invalid Image Request')
 
 
-# 创建视图
+# 创建主页视图
 def index(request):
-    return HttpResponse('INDEX')
+    example = reverse('placeholder', kwargs={'width': 50, 'height': 50})
+    context = {
+        'example': request.build_absolute_uri(example)
+    }
+    return render(request, 'home.html', context)
 
 
 # 定义 URL 模式
@@ -137,3 +156,4 @@ application = get_wsgi_application()
 if __name__ == '__main__':
     from django.core.management import execute_from_command_line
     execute_from_command_line(sys.argv)
+
